@@ -9,8 +9,9 @@ QT       += core
 QT       -= gui
 
 TARGET = Great68
-CONFIG   += console
-CONFIG   -= app_bundle
+CONFIG += console
+CONFIG -= app_bundle
+CONFIG += c++11
 
 TEMPLATE = app
 
