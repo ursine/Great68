@@ -1,6 +1,7 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
+#include <QFile>
 
 int main(int argc, char *argv[])
 {
@@ -23,7 +24,7 @@ int main(int argc, char *argv[])
     // Process the actual command line arguments given by the user
     parser.process(app);
 
-    const QStringList args = parser.positionalArguments();
+    const auto args = parser.positionalArguments();
 
     const bool verbose = parser.isSet(vbs);
 
