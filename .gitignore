@@ -21,3 +21,4 @@
 
 # Local only
 *.ROM
+Makefile
