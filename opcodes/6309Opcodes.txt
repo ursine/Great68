@@ -2,7 +2,24 @@
 # INHERENT (Implied)  - NOP         Single byte instructions
 # IMMEDIATE           - LDA #$20    Puts $20 in A
 # EXTENDED            - LDA $20FF   Puts value @ $20FF in A
-#
+# INDEXED             - several variations:  
+#                       Extended Indirect  LDA [$20FF]  
+#                           gets the value at the address pointed to by $20FF
+#                       Zero Offset  LDA S
+#                           gets the value @ S
+#                       Constant Offset LDA 12,S
+#                           gets the value @ S+12
+#                       Accumulator-Offset   LDA B,S
+#                           gets the value @ S+B
+#                       Auto Increment STA ,X+
+#                           put value of A in address @ X, X=X+1
+#                       Indexed Indirect LDA [$10,x]
+#                           put value @ address pointed to by address at X+$10
+# DIRECT              - LDA <$30   value @ $0030 (dp is upper 8 bits) into A
+# REGISTER            - EXG X,Y    swaps X and Y
+# RELATIVE            - BEQ $10    address is relative to the pc
+# MEMORY              - BAND A,5,1,$40  A & bit 5 from value @ $40 -> A
+
 
 #
 #Opcode      Mnemonic       Mode          Cycles       Length  
