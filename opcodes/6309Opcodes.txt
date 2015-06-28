@@ -1,3 +1,10 @@
+<!--
+# Modes
+# INHERENT (Implied)  - NOP         Single byte instructions
+# IMMEDIATE           - LDA #$20    Puts $20 in A
+# EXTENDED            - LDA $20FF   Puts value @ $20FF in A
+
+
 #
 #Opcode      Mnemonic       Mode          Cycles       Length  
 #(* 6309)                                6809 (6309)           
@@ -440,3 +447,4 @@
 * 11F6        LDF        EXTENDED        6 (5)          4    
 * 11F7        STF        EXTENDED        6 (5)          4    
 * 11FB        ADDF       EXTENDED        6 (5)          4    
+-->
