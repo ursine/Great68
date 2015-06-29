@@ -8,3 +8,4 @@ INCLUDEPATH += .
 
 # Input
 SOURCES += main.cpp
+HEADERS += memory_view_window.hpp

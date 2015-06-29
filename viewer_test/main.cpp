@@ -1,5 +1,7 @@
 #include <QtGui>
 
+#include "memory_view_window.hpp"
+
 /*
 
   create array of boxes mapped to memory, boxes are various shades of blue corresponding to their value.
@@ -24,15 +26,6 @@
   ############################# 
 
  */
-
-class MemoryViewWindow : public QWindow
-{
-  Q_OBJECT
-
-public:
-  explicit MemoryViewWindow(QWindow* parent = 0);
-  
-};
 
 MemoryViewWindow::MemoryViewWindow(QWindow* parent) :
   QWindow(parent)
