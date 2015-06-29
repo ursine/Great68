@@ -33,7 +33,14 @@ public:
   explicit MemoryViewWindow(QWindow* parent = 0);
   
 };
-  
+
+MemoryViewWindow::MemoryViewWindow(QWindow* parent) :
+  QWindow(parent)
+{
+  create();
+  setGeometry(100,100,300,200);
+}
+
 int main(int argc, char** argv)
 {
   QGuiApplication app(argc,argv);
