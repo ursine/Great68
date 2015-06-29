@@ -25,5 +25,21 @@
 
  */
 
+class MemoryViewWindow : public QWindow
+{
+  Q_OBJECT
 
+public:
+  explicit MemoryViewWindow(QWindow* parent = 0);
+  
+};
+  
+int main(int argc, char** argv)
+{
+  QGuiApplication app(argc,argv);
 
+  MemoryViewWindow w;
+  w.show();
+
+  return app.exec();
+}
