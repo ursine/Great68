@@ -2,6 +2,8 @@
 #include <QCommandLineParser>
 #include <QCommandLineOption>
 #include <QFile>
+#include <QDebug>
+#include <QFileInfo>
 
 int main(int argc, char *argv[])
 {
@@ -15,22 +17,31 @@ int main(int argc, char *argv[])
     parser.setApplicationDescription("An emulator for the Tandy Color Computers and accessories");
     parser.addHelpOption();
     parser.addVersionOption();
+    
+    /*parser.addOptions({
+                      { {"V","verbose"},
+                          QCoreApplication::translate("main", "Show verbose logging about the system")},
+                          });        */
 
-    // A boolean option with multiple values (-v)
-    QCommandLineOption vbs ( QStringList() << "v" << "verbose",
-                QCoreApplication::translate("main", "Show verbose logging about the system") );
-    parser.addOption(vbs);
-
+    parser.addPositionalArgument("basic-rom","The color computer basic rom to load at $A000");
+    
     // Process the actual command line arguments given by the user
     parser.process(app);
 
-    const auto args = parser.positionalArguments();
+    const QStringList args = parser.positionalArguments();
 
-    const bool verbose = parser.isSet(vbs);
+    //const bool verbose = parser.isSet("verbose");
 
+    const QString brom = args.first();    
+    
+    QFile romFile(brom);
+    const QFileInfo romInfo(romFile);
+    
+    qDebug() << "Loading ROM: " << romInfo.absoluteFilePath();
 
+    quint8 ram[64*1024];
 
-
+    
 
     return app.exec();
 }

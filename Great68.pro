@@ -12,6 +12,7 @@ TARGET = Great68
 CONFIG += console
 CONFIG -= app_bundle
 CONFIG += c++11
+CONFIG += debug
 
 TEMPLATE = app
 
