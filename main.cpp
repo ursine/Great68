@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QDebug>
 #include <QFileInfo>
+#include <QByteArray>
+#include <QtGlobal>
 
 int main(int argc, char *argv[])
 {
@@ -32,16 +34,35 @@ int main(int argc, char *argv[])
 
     //const bool verbose = parser.isSet("verbose");
 
-    const QString brom = args.first();    
+    const QString brom = args.isEmpty() ? "" : args.first();    
     
     QFile romFile(brom);
     const QFileInfo romInfo(romFile);
     
     qDebug() << "Loading ROM: " << romInfo.absoluteFilePath();
 
-    quint8 ram[64*1024];
+    QByteArray ram(64*1024,0);
 
+    size_t loadLoc = 0xA000;
     
+    if (!romFile.open(QIODevice::ReadOnly))
+    {
+      qCritical("Unable to open rom file");      
+    }
 
+    char buffer[1024];
+    while(qint64 bytesRead = romFile.read(buffer,sizeof(buffer)))
+    {
+      if (bytesRead==-1) {
+        qCritical("Unable to complete reading file");
+        break;
+      }
+      
+      ram.replace(loadLoc,bytesRead,buffer,bytesRead);
+      qDebug("Read %d bytes to %x - %x",bytesRead,loadLoc,loadLoc+bytesRead-1);
+      loadLoc += bytesRead;
+      
+    }
+    
     return app.exec();
 }
