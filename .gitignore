@@ -20,6 +20,9 @@
 *.lib
 
 # Local only
-*.ROM
+*.rom
 Makefile
 Great68
+.idea
+out
+*.iml
