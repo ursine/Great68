@@ -21,12 +21,12 @@ def main():
             if hconly:
                 line_stripped = line_stripped[1:].strip()
 
-            opnum = re.compile(r"([\d|A|B|C|D|E|F]+)\s+(\w+|/)\s+")
+            opnum = re.compile(r"([\d|A|B|C|D|E|F]+)\s+([\w|/]+)\s+")
             numm = opnum.search(line_stripped)
 
             print numm.group()
 
-            print line_stripped
+#            print line_stripped
 
 
 if __name__ == "__main__":
