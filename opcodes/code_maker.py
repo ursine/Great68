@@ -6,6 +6,9 @@ mc6809 = []
 hc6309 = []
 
 def main():
+
+    print "switch(opcode) {"
+
     with file('6309Opcodes.txt', 'r') as the_file:
         for the_line in the_file:
 
@@ -24,10 +27,16 @@ def main():
             opnum = re.compile(r"([\d|A|B|C|D|E|F]+)\s+([\w|/]+)\s+")
             numm = opnum.search(line_stripped)
 
-            print numm.group()
+            opcode = int(numm.group(1),16)
 
-#            print line_stripped
+            if opcode <= 0xFF:
+                print "    case 0x%0.2X : break;" % opcode
 
+
+    print "    case default: {"
+    print "        break;"
+    print "    }"
+    print "}"
 
 if __name__ == "__main__":
     main()

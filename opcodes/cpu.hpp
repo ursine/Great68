@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdint>
 
-constexpr size_t SIZE_64Kb = 1024*64;
+constexpr size_t SIZE_64K = 1024*64;
 
 class Memory
 {
@@ -18,8 +18,14 @@ template<size_t T>
 class SimpleRAM : public Memory
 {
 public:
-  SimpleRAM() : Memory() {}
+  SimpleRAM() : Memory()
+  {
+    ram.fill(0);
+  }
 
+  uint8_t read8(const uint16_t address) const { return ram.at(address); }
+  
+  
 private:
   std::array<uint8_t,T> ram;
 };
