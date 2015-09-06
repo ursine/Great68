@@ -21,7 +21,6 @@
 
 # Local only
 *.rom
-Makefile
 Great68
 .idea
 out

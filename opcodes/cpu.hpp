@@ -19,11 +19,8 @@ class Memory
 class SimpleRAM : public Memory<uint16_t>
 {
 public:
-  SimpleRAM() : Memory()
-  {
-    ram.fill(0);
-  }
-
+  SimpleRAM();
+  
   uint8_t  read8(const uint16_t address)  const override { return ram.at(address); }
   uint16_t read16(const uint16_t address) const override { return ram.at(address) << 8 | ram.at(address+1); }
 
