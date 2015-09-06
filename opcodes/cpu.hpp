@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string>
 
 constexpr size_t SIZE_64K = 1024*64;
 
@@ -32,9 +33,12 @@ public:
     ram.at(address+1) = value & 0xFF;
   }
 
+  void readROM(const std::string file, const uint16_t startAddress);
+
 private:
   std::array<uint8_t,SIZE_64K> ram;
 };
+
 
 class CPU
 {
