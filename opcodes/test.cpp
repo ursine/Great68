@@ -4,5 +4,6 @@ SimpleRAM tram;
 
 int main(int argc, char* argv[])
 {
-  return 1;
+  tram.loadROM("roms/bas13.rom",0xA000);
+  tram.loadROM("roms/extbas11.rom",0x8000);
 }

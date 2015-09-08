@@ -20,7 +20,7 @@ class SimpleRAM : public Memory<uint16_t>
 {
 public:
   SimpleRAM();
-  
+
   uint8_t  read8(const uint16_t address)  const override { return ram.at(address); }
   uint16_t read16(const uint16_t address) const override { return ram.at(address) << 8 | ram.at(address+1); }
 
@@ -30,7 +30,7 @@ public:
     ram.at(address+1) = value & 0xFF;
   }
 
-  void readROM(const std::string file, const uint16_t startAddress);
+  void loadROM(const std::string& file, const uint16_t startAddress);
 
 private:
   std::array<uint8_t,SIZE_64K> ram;
