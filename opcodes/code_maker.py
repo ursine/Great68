@@ -13,6 +13,12 @@ hc6309_11 = {}
 
 def main():
 
+    print '#include <stdexcept>'
+    print
+    print 'using UnknownOpcode     = std::invalid_argument;'
+    print 'using UnsupportedOpcode = std::invalid_argument;'
+    print 
+    
     with file('6309Opcodes.txt', 'r') as the_file:
         for the_line in the_file:
 
@@ -45,19 +51,17 @@ def main():
     for opcode in xrange(0,0xFF):
         opstr = "0x%0.2X" % opcode
 
-        support = "Unknown"
+        support = "UnknownOpcode"
         opname = "INVALID"
         if (opcode in mc6809):
-            support = "Unsupported"
+            support = "UnsupportedOpcode"
             opname = mc6809[opcode][1]
 
         print
         print "    case %s : { // %s " % (opstr,opname)
-        print "        abort(\"%s opcode %s\");" % (support,opstr)
+        print "        throw new %s(\"%s %s\");" % (support,opname,opstr)
         print "        break;"
         print "    }"
-
-
 
     print "    case default: {"
     print "        break;"
