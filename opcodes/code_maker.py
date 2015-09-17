@@ -64,7 +64,7 @@ def main():
         print "        break;"
         print "    }"
 
-    print "    case default: {"
+    print "    default: {"
     print "        break;"
     print "    }"
     print "}"
