@@ -19,6 +19,8 @@ void SimpleRAM::loadROM(const std::string& file, const uint16_t address)
 
   std::vector<char> val(start,end);
 
+  std::cout << file << " " << val.size() << std::endl;
+  
   std::copy(val.begin(), val.end(), ram.begin() + address);
 }
 
@@ -28,6 +30,7 @@ using UnsupportedOpcode = std::invalid_argument;
 MC6809::MC6809(std::shared_ptr<TandyMemory> m) :
   memory(m)
 {
+  reset();
 }
 
 void MC6809::reset()
