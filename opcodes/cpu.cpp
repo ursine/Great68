@@ -21,6 +21,11 @@ void SimpleRAM::loadROM(const std::string& file, const uint16_t address)
   std::copy(val.begin(), val.end(), ram.begin() + address);
 }
 
+MC6809::MC6809(std::shared_ptr<TandyMemory> m) :
+  memory(m)
+{
+}
+
 void MC6809::reset()
 {
   PC = memory->read16(0xFFFE);

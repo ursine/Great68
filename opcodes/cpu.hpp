@@ -20,7 +20,7 @@ public:
 
 using TandyMemory = Memory<uint16_t>;
 
-class SimpleRAM : public Memory<uint16_t>
+class SimpleRAM : public TandyMemory
 {
 public:
   SimpleRAM();
@@ -40,10 +40,6 @@ private:
   std::array<uint8_t,SIZE_64K> ram;
 };
 
-class Opcode {
-};
-
-
 class CPU
 {
 public:
@@ -54,6 +50,8 @@ public:
 class MC6809 : public CPU
 {
 public:
+  MC6809(std::shared_ptr<TandyMemory> m);
+
   void reset() override;
   int  runFor(const int cycles) override;
 

@@ -59,6 +59,7 @@ def main():
 
         print
         print "    case %s : { // %s " % (opstr,opname)
+        print "        opcode = \"%s\";" % opname
         print "        throw new %s(\"%s %s\");" % (support,opname,opstr)
         print "        break;"
         print "    }"
