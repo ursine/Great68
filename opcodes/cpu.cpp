@@ -32,7 +32,7 @@ void MC6809::reset()
   D=U=S=X=Y=0;
 }
 
-int MC6809::runFor(const int cycles)
+int MC6809::run()
 {
   return 0;
 }
