@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
   {
       cpu.run();    
   }
-  catch(const std::invalid_argument& ia)
+  catch(std::invalid_argument& ia)
   {
       std::cout << "INVALID: " << ia.what() << std::endl;
   }
