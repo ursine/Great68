@@ -11,8 +11,17 @@ logger = logging.getLogger('6809asm')
 class Tokens(Enum):
     COMMENT = auto()
     LABEL = auto()
+    RMB = auto()
+    EQU = auto()
+    ORG = auto()
+    PAG = auto()
 
+class Node:
+    pass
 
+token_map = {
+    
+}
 
 if __name__=='__main__':
     logging.basicConfig(level=logging.DEBUG)
@@ -40,10 +49,25 @@ if __name__=='__main__':
         if text[0] == '*':
             continue # This is a comment
 
-        pieces = text.split()
+        pieces = text.split(maxsplit=3)
+        piece  = 0
 
         if text[0] != ' ' and text[0] != '\t':
-            parts.append((Tokens.LABEL, pieces[0]))
+            parts.append((Tokens.LABEL, pieces[piece]))
+            piece+=1
+        
+        cmd = pieces[piece]
+        if cmd == 'RMB':
+            parts.append((Tokens.RMB, pieces[piece+1]))
+        
+        if cmd == 'EQU':
+            parts.append((Tokens.EQU, pieces[piece+1]))
+            
+        if cmd == 'ORG':
+            parts.append((Tokens.ORG, pieces[piece+1]))
+            
+        if cmd == 'PAG':
+            parts.append(Tokens.PAG)
         
         print(lineno, '-', parts, ':', text)
 
