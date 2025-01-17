@@ -8,9 +8,16 @@ int main() {
     votrax.device_reset();
 
     votrax.write(0x06);
+    for (int i = 0; i < 51200; i++) { votrax.chip_update(); }
+
     votrax.write(0x13);
+    for (int i = 0; i < 51200; i++) { votrax.chip_update(); }
+
     votrax.write(0x23);
+    for (int i = 0; i < 51200; i++) { votrax.chip_update(); }
+
     votrax.write(0x1A);
+    for (int i = 0; i < 51200; i++) { votrax.chip_update(); }
 
     return 0;
 }

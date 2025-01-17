@@ -12,7 +12,7 @@
 
 #include <array>
 #include <cstring>
-#include <cstdio>
+#include <chrono>
 
 #include "sc01a.h"
 
@@ -34,6 +34,8 @@ public:
 
 	void write(uint8_t data);
 	void inflection_w(uint8_t data);
+
+	void chip_update();                             // Global update called at 20KHz (main/36)
 
     void clock(const uint32_t c) {realClock = c; device_clock_changed();}
     [[nodiscard]] uint32_t clock() const {return realClock;}
@@ -224,7 +226,7 @@ private:
 //	TIMER_CALLBACK_MEMBER(phone_tick);
 //
 //	static void interpolate(u8 &reg, u8 target);    // Do one interpolation step
-//	void chip_update();                             // Global update called at 20KHz (main/36)
+//
 
 //	stream_buffer::sample_t analog_calc();                  // Compute one more sample
 //};

@@ -37,6 +37,8 @@ tp1 = phi clock (tied to f2q rom access)
 
 #define VERBOSE (LOG_GENERAL | LOG_PHONE)
 
+auto program_start = std::chrono::steady_clock::now();
+
 void votrax_sc01_device::write(const uint8_t data)
 {
 	// flush out anything currently processing
@@ -209,7 +211,7 @@ void votrax_sc01_device::device_clock_changed()
 //
 //	m_ar_cb(m_ar_state);
 //}
-//
+
 void votrax_sc01_device::phone_commit() {
     // Only these two counters are reset on phone change, the rest is
     // free-running.
@@ -257,99 +259,104 @@ void votrax_sc01_device::phone_commit() {
 	}
 }
 
-//void votrax_sc01_device::interpolate(u8 &reg, u8 target)
-//{
-//	// One step of interpolation, adds one eight of the distance
-//	// between the current value and the target.
-//	reg = reg - (reg >> 3) + (target << 1);
-//}
-//
-//void votrax_sc01_device::chip_update()
-//{
-//	// Phone tick counter update.  Stopped when ticks reach 16.
-//	// Technically the counter keeps updating, but the comparator is
-//	// disabled.
-//	if(m_ticks != 0x10) {
-//		m_phonetick++;
-//		// Comparator is with duration << 2, but there's a one-tick
-//		// delay in the path.
-//		if(m_phonetick == ((m_rom_duration << 2) | 1)) {
-//			m_phonetick = 0;
-//			m_ticks++;
-//			if(m_ticks == m_rom_cld)
-//				m_cur_closure = m_rom_closure;
-//		}
-//	}
-//
-//	// The two update timing counters.  One divides by 16, the other
-//	// by 48, and they're phased so that the 208Hz counter ticks
-//	// exactly between two 625Hz ticks.
-//	m_update_counter++;
-//	if(m_update_counter == 0x30)
-//		m_update_counter = 0;
-//
-//	bool tick_625 = !(m_update_counter & 0xf);
-//	bool tick_208 = m_update_counter == 0x28;
-//
-//	// Formant update.  Die bug there: fc should be updated, not va.
-//	// The formants are frozen on a pause phone unless both voice and
-//	// noise volumes are zero.
-//	if(tick_208 && (!m_rom_pause || !(m_filt_fa || m_filt_va))) {
-//		// interpolate(m_cur_va,  m_rom_va);
-//		interpolate(m_cur_fc,  m_rom_fc);
-//		interpolate(m_cur_f1,  m_rom_f1);
-//		interpolate(m_cur_f2,  m_rom_f2);
-//		interpolate(m_cur_f2q, m_rom_f2q);
-//		interpolate(m_cur_f3,  m_rom_f3);
-//		LOGMASKED(LOG_INT, "int fa=%x va=%x fc=%x f1=%x f2=%02x f2q=%02x f3=%x\n", m_cur_fa >> 4, m_cur_va >> 4, m_cur_fc >> 4, m_cur_f1 >> 4, m_cur_f2 >> 3, m_cur_f2q >> 4, m_cur_f3 >> 4);
-//	}
-//
-//	// Non-formant update. Same bug there, va should be updated, not fc.
-//	if(tick_625) {
-//		if(m_ticks >= m_rom_vd)
-//			interpolate(m_cur_fa, m_rom_fa);
-//		if(m_ticks >= m_rom_cld) {
-//			// interpolate(m_cur_fc, m_rom_fc);
-//			interpolate(m_cur_va, m_rom_va);
-//			LOGMASKED(LOG_INT, "int fa=%x va=%x fc=%x f1=%x f2=%02x f2q=%02x f3=%x\n", m_cur_fa >> 4, m_cur_va >> 4, m_cur_fc >> 4, m_cur_f1 >> 4, m_cur_f2 >> 3, m_cur_f2q >> 4, m_cur_f3 >> 4);
-//		}
-//	}
-//
-//	// Closure counter, reset every other tick in theory when not
-//	// active (on the extra rom cycle).
-//	//
-//	// The closure level is immediately used in the analog path,
-//	// there's no pitch synchronization.
-//
-//	if(!m_cur_closure && (m_filt_fa || m_filt_va))
-//		m_closure = 0;
-//	else if(m_closure != 7 << 2)
-//		m_closure ++;
-//
-//	// Pitch counter.  Equality comparison, so it's possible to make
-//	// it miss by manipulating the inflection inputs, but it'll wrap.
-//	// There's a delay, hence the +2.
-//
-//	// Intrinsically pre-divides by two, so we added one bit on the 7
-//
-//	m_pitch = (m_pitch + 1) & 0xff;
-//	if(m_pitch == (0xe0 ^ (m_inflection << 5) ^ (m_filt_f1 << 1)) + 2)
-//		m_pitch = 0;
-//
-//	// Filters are updated in index 1 of the pitch wave, which does
-//	// indeed mean four times in a row.
-//	if((m_pitch & 0xf9) == 0x08)
-//		filters_commit(false);
-//
-//	// Noise shift register.  15 bits, with a nxor on the last two
-//	// bits for the loop.
-//	bool inp = (1||m_filt_fa) && m_cur_noise && (m_noise != 0x7fff);
-//	m_noise = ((m_noise << 1) & 0x7ffe) | inp;
-//	m_cur_noise = !(((m_noise >> 14) ^ (m_noise >> 13)) & 1);
-//
-//	LOGMASKED(LOG_TICK, "%s tick %02x.%03x 625=%d 208=%d pitch=%02x.%x ns=%04x ni=%d noise=%d cl=%x.%x clf=%d/%d\n", machine().time().to_string(), m_ticks, m_phonetick, tick_625, tick_208, m_pitch >> 3, m_pitch & 7, m_noise, inp, m_cur_noise, m_closure >> 2, m_closure & 3, m_rom_closure, m_cur_closure);
-//}
-//
+void interpolate(uint8_t& reg, const uint8_t target)
+{
+	// One step of interpolation, adds one eight of the distance
+	// between the current value and the target.
+	reg = reg - (reg >> 3) + (target << 1);
+}
+
+void votrax_sc01_device::chip_update()
+{
+	// Phone tick counter update.  Stopped when ticks reach 16.
+	// Technically the counter keeps updating, but the comparator is
+	// disabled.
+	if (m_ticks != 0x10) {
+		m_phonetick++;
+
+		// Comparator is with duration << 2, but there's a one-tick
+		// delay in the path.
+		if (m_phonetick == ((m_rom_duration << 2) | 1)) {
+			m_phonetick = 0;
+			m_ticks++;
+			if(m_ticks == m_rom_cld)
+				m_cur_closure = m_rom_closure;
+		}
+	}
+
+	// The two update timing counters.  One divides by 16, the other
+	// by 48, and they're phased so that the 208Hz counter ticks
+	// exactly between two 625Hz ticks.
+	m_update_counter++;
+	if (m_update_counter == 0x30) m_update_counter = 0;
+
+	const bool tick_625 = !(m_update_counter & 0xf);
+	const bool tick_208 = m_update_counter == 0x28;
+
+	// Formant update.  Die bug there: fc should be updated, not va.
+	// The formants are frozen on a pause phone unless both voice and
+	// noise volumes are zero.
+	if (tick_208 && (!m_rom_pause || !(m_filt_fa || m_filt_va))) {
+		// interpolate(m_cur_va,  m_rom_va);
+		interpolate(m_cur_fc,  m_rom_fc);
+		interpolate(m_cur_f1,  m_rom_f1);
+		interpolate(m_cur_f2,  m_rom_f2);
+		interpolate(m_cur_f2q, m_rom_f2q);
+		interpolate(m_cur_f3,  m_rom_f3);
+		printf("int fa=%x va=%x fc=%x f1=%x f2=%02x f2q=%02x f3=%x\n",
+			m_cur_fa >> 4, m_cur_va >> 4, m_cur_fc >> 4, m_cur_f1 >> 4, m_cur_f2 >> 3,
+			m_cur_f2q >> 4, m_cur_f3 >> 4);
+	}
+
+	// Non-formant update. Same bug there, va should be updated, not fc.
+	if (tick_625) {
+		if (m_ticks >= m_rom_vd) interpolate(m_cur_fa, m_rom_fa);
+		if (m_ticks >= m_rom_cld) {
+			// interpolate(m_cur_fc, m_rom_fc);
+			interpolate(m_cur_va, m_rom_va);
+			printf("int fa=%x va=%x fc=%x f1=%x f2=%02x f2q=%02x f3=%x\n",
+				m_cur_fa >> 4, m_cur_va >> 4, m_cur_fc >> 4, m_cur_f1 >> 4, m_cur_f2 >> 3,
+				m_cur_f2q >> 4, m_cur_f3 >> 4);
+		}
+	}
+
+	// Closure counter, reset every other tick in theory when not
+	// active (on the extra rom cycle).
+	//
+	// The closure level is immediately used in the analog path,
+	// there's no pitch synchronization.
+
+	if (!m_cur_closure && (m_filt_fa || m_filt_va))
+		m_closure = 0;
+	else if (m_closure != 7 << 2)
+		m_closure ++;
+
+	// Pitch counter.  Equality comparison, so it's possible to make
+	// it miss by manipulating the inflection inputs, but it'll wrap.
+	// There's a delay, hence the +2.
+
+	// Intrinsically pre-divides by two, so we added one bit on the 7
+
+	m_pitch = (m_pitch + 1) & 0xff;
+	if (m_pitch == (0xe0 ^ (m_inflection << 5) ^ (m_filt_f1 << 1)) + 2) m_pitch = 0;
+
+	// Filters are updated in index 1 of the pitch wave, which does
+	// indeed mean four times in a row.
+	if ((m_pitch & 0xf9) == 0x08) filters_commit(false);
+
+	// Noise shift register.  15 bits, with a nxor on the last two
+	// bits for the loop.
+	bool inp = (1||m_filt_fa) && m_cur_noise && (m_noise != 0x7fff);
+	m_noise = ((m_noise << 1) & 0x7ffe) | inp;
+	m_cur_noise = !(((m_noise >> 14) ^ (m_noise >> 13)) & 1);
+
+	auto current_time = std::chrono::steady_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(current_time - program_start);
+
+	printf("%ld tick %02x.%03x 625=%d 208=%d pitch=%02x.%x ns=%04x ni=%d noise=%d cl=%x.%x clf=%d/%d\n",
+		elapsed.count(), m_ticks, m_phonetick, tick_625, tick_208, m_pitch >> 3, m_pitch & 7, m_noise, inp, m_cur_noise, m_closure >> 2, m_closure & 3, m_rom_closure, m_cur_closure);
+}
+
 void votrax_sc01_device::filters_commit(bool force)
 {
 	m_filt_fa = m_cur_fa >> 4;
