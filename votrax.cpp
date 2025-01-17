@@ -50,10 +50,10 @@ tp1 = phi clock (tied to f2q rom access)
 //ROM_END
 //
 
-votrax_sc01_device::votrax_sc01_device():
-    m_inflection(0), m_phone(0x3f), m_ar_state(ASSERT_LINE)
-{
-}
+//votrax_sc01_device::votrax_sc01_device():
+//    m_inflection(0), m_phone(0x3f), m_ar_state(ASSERT_LINE)
+//{
+//}
 
 
 //votrax_sc01_device::votrax_sc01_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
@@ -186,11 +186,11 @@ void votrax_sc01_device::device_reset() {
     m_inflection = 0;
     m_ar_state = ASSERT_LINE;
 //	m_ar_cb(m_ar_state);
-//
-//	m_sample_count = 0;
-//
-//	// Initialize the m_rom* values
-//	phone_commit();
+
+    m_sample_count = 0;
+
+    // Initialize the m_rom* values
+    phone_commit();
 //
 //	// Clear the interpolation sram
 //	m_cur_fa = m_cur_fc = m_cur_va = 0;
@@ -278,52 +278,52 @@ void votrax_sc01_device::device_reset() {
 //	m_ar_cb(m_ar_state);
 //}
 //
-//void votrax_sc01_device::phone_commit()
-//{
-//	// Only these two counters are reset on phone change, the rest is
-//	// free-running.
-//	m_phonetick = 0;
-//	m_ticks = 0;
-//
-//	// In the real chip, the rom is re-read all the time.  Since it's
-//	// internal and immutable, no point in not caching it though.
-//	for(int i=0; i<64; i++) {
-//		u64 val = reinterpret_cast<const u64 *>(m_rom->base())[i];
-//		if(m_phone == ((val >> 56) & 0x3f)) {
-//			m_rom_f1  = bitswap(val,  0,  7, 14, 21);
-//			m_rom_va  = bitswap(val,  1,  8, 15, 22);
-//			m_rom_f2  = bitswap(val,  2,  9, 16, 23);
-//			m_rom_fc  = bitswap(val,  3, 10, 17, 24);
-//			m_rom_f2q = bitswap(val,  4, 11, 18, 25);
-//			m_rom_f3  = bitswap(val,  5, 12, 19, 26);
-//			m_rom_fa  = bitswap(val,  6, 13, 20, 27);
-//
-//			// These two values have their bit orders inverted
-//			// compared to everything else due to a bug in the
-//			// prototype (miswiring of the comparator with the ticks
-//			// count) they compensated in the rom.
-//
-//			m_rom_cld = bitswap(val, 34, 32, 30, 28);
-//			m_rom_vd  = bitswap(val, 35, 33, 31, 29);
-//
-//			m_rom_closure  = bitswap(val, 36);
-//			m_rom_duration = bitswap(~val, 37, 38, 39, 40, 41, 42, 43);
-//
-//			// Hard-wired on the die, not an actual part of the rom.
-//			m_rom_pause = (m_phone == 0x03) || (m_phone == 0x3e);
-//
+void votrax_sc01_device::phone_commit() {
+    // Only these two counters are reset on phone change, the rest is
+    // free-running.
+    m_phonetick = 0;
+    m_ticks = 0;
+
+    // In the real chip, the rom is re-read all the time.  Since it's
+    // internal and immutable, no point in not caching it though.
+	for(int i=0; i<64; i++) {
+
+	    auto val = static_cast<const uint64_t>(m_rom[i]);
+
+	    if (m_phone == ((val >> 56) & 0x3f)) {
+            m_rom_f1  = bitswap(val,  0,  7, 14, 21);
+            m_rom_va  = bitswap(val,  1,  8, 15, 22);
+            m_rom_f2  = bitswap(val,  2,  9, 16, 23);
+            m_rom_fc  = bitswap(val,  3, 10, 17, 24);
+            m_rom_f2q = bitswap(val,  4, 11, 18, 25);
+            m_rom_f3  = bitswap(val,  5, 12, 19, 26);
+	        m_rom_fa  = bitswap(val,  6, 13, 20, 27);
+
+			// These two values have their bit orders inverted
+			// compared to everything else due to a bug in the
+			// prototype (miswiring of the comparator with the ticks
+			// count) they compensated in the rom.
+
+			m_rom_cld = bitswap(val, 34, 32, 30, 28);
+			m_rom_vd  = bitswap(val, 35, 33, 31, 29);
+
+			m_rom_closure  = bitswap(val, 36);
+			m_rom_duration = bitswap(~val, 37, 38, 39, 40, 41, 42, 43);
+
+			// Hard-wired on the die, not an actual part of the rom.
+			m_rom_pause = (m_phone == 0x03) || (m_phone == 0x3e);
+
 //			LOGMASKED(LOG_COMMIT, "commit fa=%x va=%x fc=%x f1=%x f2=%x f2q=%x f3=%x dur=%02x cld=%x vd=%d cl=%d pause=%d\n", m_rom_fa, m_rom_va, m_rom_fc, m_rom_f1, m_rom_f2, m_rom_f2q, m_rom_f3, m_rom_duration, m_rom_cld, m_rom_vd, m_rom_closure, m_rom_pause);
-//
-//			// That does not happen in the sc01(a) rom, but let's
-//			// cover our behind.
-//			if(m_rom_cld == 0)
-//				m_cur_closure = m_rom_closure;
-//
-//			return;
-//		}
-//	}
-//}
-//
+
+			// That does not happen in the sc01(a) rom, but let's
+			// cover our behind.
+			if (m_rom_cld == 0) m_cur_closure = m_rom_closure;
+
+            return;
+        }
+	}
+}
+
 //void votrax_sc01_device::interpolate(u8 &reg, u8 target)
 //{
 //	// One step of interpolation, adds one eight of the distance
