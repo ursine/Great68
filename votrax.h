@@ -10,6 +10,88 @@
 
 #pragma once
 
+#include <array>
+
+#include "sc01a.h"
+
+constexpr bool ASSERT_LINE = true;
+constexpr bool CLEAR_LINE  = false;
+
+class votrax_sc01_device {
+public:
+
+	votrax_sc01_device();
+
+    void device_start();
+	void device_reset();
+
+private:
+	// Inputs
+	uint8_t m_inflection;                           // 2-bit inflection value
+	uint8_t m_phone;                                // 6-bit phone value
+
+	// Outputs
+	//	devcb_write_line m_ar_cb;                       // Callback for ar
+	bool m_ar_state;                                // Current ar state
+
+    static constexpr std::array<const char*, 64> s_phone_table {{
+        "EH3",  "EH2",  "EH1",  "PA0",  "DT",   "A1",   "A2",   "ZH",
+        "AH2",  "I3",   "I2",   "I1",   "M",    "N",    "B",    "V",
+        "CH",   "SH",   "Z",    "AW1",  "NG",   "AH1",  "OO1",  "OO",
+        "L",    "K",    "J",    "H",    "G",    "F",    "D",    "S",
+        "A",    "AY",   "Y1",   "UH3",  "AH",   "P",    "O",    "I",
+        "U",    "Y",    "T",    "R",    "E",    "W",    "AE",   "AE1",
+        "AW2",  "UH2",  "UH1",  "UH",   "O2",   "O1",   "IU",   "U1",
+        "THV",  "TH",   "ER",   "EH",   "E1",   "AW",   "PA1",  "STOP"
+    }};
+
+	// This waveform is built using a series of transistors as a resistor
+	// ladder.  There is first a transistor to ground, then a series of
+	// seven transistors one quarter the size of the first one, then it
+	// finishes by an active resistor to +9V.
+	//
+	// The terminal of the transistor to ground is used as a middle value.
+	// Index 0 is at that value. Index 1 is at 0V.  Index 2 to 8 start at
+	// just after the resistor down the latter.  Indices 9+ are the middle
+	// value again.
+	//
+	// For simplicity, we rescale the values to get the middle at 0 and
+	// the top at 1.  The final wave is very similar to the patent
+	// drawing.
+	static constexpr std::array<const double, 9> s_glottal_wave {{
+		0, (-4/7.0), (7/7.0), (6/7.0), (5/7.0), (4/7.0), (3/7.0), (2/7.0), (1/7.0)
+	}};
+
+
+	// ------------------ UTILITY FUNCTIONS -----------------------------------
+    // Compute a total capacitor value based on which bits are currently active
+    static double bits_to_caps(uint32_t value, std::initializer_list<double> caps_values) {
+    	double total = 0;
+    	for (const double d: caps_values) {
+    		if (value & 1) total += d;
+    		value >>= 1;
+    	}
+    	return total;
+    }
+
+	// Shift a history of values by one and insert the new value at the front
+	template<uint32_t N> static void shift_hist(double val, double (&hist_array)[N]) {
+		for (uint32_t i=N-1; i>0; i++) hist_array[i] = hist_array[i-1];
+		hist_array[0] = val;
+	}
+
+	// Apply a filter and compute the result. 'a' is applied to x (inputs) and 'b' to y (outputs)
+	template<uint32_t Nx, uint32_t Ny, uint32_t Na, uint32_t Nb> static double apply_filter(
+		const double (&x)[Nx], const double (&y)[Ny], const double (&a)[Na], const double (&b)[Nb])
+	{
+		double total = 0;
+		for(uint32_t i=0; i<Na; i++) total += x[i] * a[i];
+		for(uint32_t i=1; i<Nb; i++) total -= y[i-1] * b[i];
+		return total / b[0];
+	}
+
+};
+
 //class votrax_sc01_device :  public device_t,
 //							public device_sound_interface
 //{
@@ -44,9 +126,6 @@
 //		T_END_OF_PHONE
 //	};
 //
-//	static const char *const s_phone_table[64];
-//	static const double s_glottal_wave[9];
-//
 //	sound_stream *m_stream;                         // Output stream
 //	emu_timer *m_timer;                             // General timer
 //	required_memory_region m_rom;                   // Internal ROM
@@ -55,13 +134,8 @@
 //	double m_cclock;                                // 20KHz capacitor switching clock (main/36)
 //	u32 m_sample_count;                             // Sample counter, to cadence chip updates
 //
-//	// Inputs
-//	u8 m_inflection;                                // 2-bit inflection value
-//	u8 m_phone;                                     // 6-bit phone value
-//
-//	// Outputs
-//	devcb_write_line m_ar_cb;                       // Callback for ar
-//	bool m_ar_state;                                // Current ar state
+
+
 //
 //	// "Unpacked" current rom values
 //	u8 m_rom_duration;                              // Duration in 5KHz units (main/144) of one tick, 16 ticks per phone, 7 bits
@@ -116,33 +190,6 @@
 //	double m_fx_a[1],  m_fx_b[2];                   // Final filtering
 //	double m_fn_a[3],  m_fn_b[3];                   // Noise shaping
 //
-//	// Compute a total capacitor value based on which bits are currently active
-//	static double bits_to_caps(u32 value, std::initializer_list<double> caps_values) {
-//		double total = 0;
-//		for(double d : caps_values) {
-//			if(value & 1)
-//				total += d;
-//			value >>= 1;
-//		}
-//		return total;
-//	}
-//
-//	// Shift a history of values by one and insert the new value at the front
-//	template<u32 N> static void shift_hist(double val, double (&hist_array)[N]) {
-//		for(u32 i=N-1; i>0; i--)
-//			hist_array[i] = hist_array[i-1];
-//		hist_array[0] = val;
-//	}
-//
-//	// Apply a filter and compute the result. 'a' is applied to x (inputs) and 'b' to y (outputs)
-//	template<u32 Nx, u32 Ny, u32 Na, u32 Nb> static double apply_filter(const double (&x)[Nx], const double (&y)[Ny], const double (&a)[Na], const double (&b)[Nb]) {
-//		double total = 0;
-//		for(u32 i=0; i<Na; i++)
-//			total += x[i] * a[i];
-//		for(u32 i=1; i<Nb; i++)
-//			total -= y[i-1] * b[i];
-//		return total / b[0];
-//	}
 //
 //	void build_standard_filter(double *a, double *b,
 //							   double c1t, // Unswitched cap, input, top

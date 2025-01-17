@@ -31,7 +31,8 @@ tp1 = phi clock (tied to f2q rom access)
 #define LOG_TICK   (1U << 4)
 #define LOG_FILTER (1U << 5)
 
-//#define VERBOSE (LOG_GENERAL | LOG_PHONE)
+#define VERBOSE (LOG_GENERAL | LOG_PHONE)
+
 //#include "logmacro.h"
 //
 //DEFINE_DEVICE_TYPE(VOTRAX_SC01, votrax_sc01_device, "votrsc01", "Votrax SC-01")
@@ -48,46 +49,13 @@ tp1 = phi clock (tied to f2q rom access)
 //	ROM_LOAD( "sc01a.bin", 0x000, 0x200, CRC(fc416227) SHA1(1d6da90b1807a01b5e186ef08476119a862b5e6d) )
 //ROM_END
 //
-//// textual phone names for debugging
-//const char *const votrax_sc01_device::s_phone_table[64] =
-//{
-//	"EH3",  "EH2",  "EH1",  "PA0",  "DT",   "A1",   "A2",   "ZH",
-//	"AH2",  "I3",   "I2",   "I1",   "M",    "N",    "B",    "V",
-//	"CH",   "SH",   "Z",    "AW1",  "NG",   "AH1",  "OO1",  "OO",
-//	"L",    "K",    "J",    "H",    "G",    "F",    "D",    "S",
-//	"A",    "AY",   "Y1",   "UH3",  "AH",   "P",    "O",    "I",
-//	"U",    "Y",    "T",    "R",    "E",    "W",    "AE",   "AE1",
-//	"AW2",  "UH2",  "UH1",  "UH",   "O2",   "O1",   "IU",   "U1",
-//	"THV",  "TH",   "ER",   "EH",   "E1",   "AW",   "PA1",  "STOP"
-//};
-//
-//// This waveform is built using a series of transistors as a resistor
-//// ladder.  There is first a transistor to ground, then a series of
-//// seven transistors one quarter the size of the first one, then it
-//// finishes by an active resistor to +9V.
-////
-//// The terminal of the transistor to ground is used as a middle value.
-//// Index 0 is at that value. Index 1 is at 0V.  Index 2 to 8 start at
-//// just after the resistor down the latter.  Indices 9+ are the middle
-//// value again.
-////
-//// For simplicity, we rescale the values to get the middle at 0 and
-//// the top at 1.  The final wave is very similar to the patent
-//// drawing.
-//
-//const double votrax_sc01_device::s_glottal_wave[9] =
-//{
-//	0,
-//	-4/7.0,
-//	7/7.0,
-//	6/7.0,
-//	5/7.0,
-//	4/7.0,
-//	3/7.0,
-//	2/7.0,
-//	1/7.0
-//};
-//
+
+votrax_sc01_device::votrax_sc01_device():
+    m_inflection(0), m_phone(0x3f), m_ar_state(ASSERT_LINE)
+{
+}
+
+
 //votrax_sc01_device::votrax_sc01_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
 //	: votrax_sc01_device(mconfig, VOTRAX_SC01, tag, owner, clock)
 //{
@@ -192,103 +160,31 @@ tp1 = phi clock (tied to f2q rom access)
 ////  device_start - handle device startup
 ////-------------------------------------------------
 //
-//void votrax_sc01_device::device_start()
-//{
-//	// initialize internal state
+void votrax_sc01_device::device_start() {
+	// initialize internal state
 //	m_mainclock = clock();
 //	m_sclock = m_mainclock / 18.0;
 //	m_cclock = m_mainclock / 36.0;
 //	m_stream = stream_alloc(0, 1, m_sclock);
 //	m_timer = timer_alloc(FUNC(votrax_sc01_device::phone_tick), this);
 //
-//	// reset outputs
-//	m_ar_state = ASSERT_LINE;
-//
-//	// save inputs
-//	save_item(NAME(m_inflection));
-//	save_item(NAME(m_phone));
-//
-//	// save outputs
-//	save_item(NAME(m_ar_state));
-//
-//	// save internal state
-//	save_item(NAME(m_rom_duration));
-//	save_item(NAME(m_rom_vd));
-//	save_item(NAME(m_rom_cld));
-//	save_item(NAME(m_rom_fa));
-//	save_item(NAME(m_rom_fc));
-//	save_item(NAME(m_rom_va));
-//	save_item(NAME(m_rom_f1));
-//	save_item(NAME(m_rom_f2));
-//	save_item(NAME(m_rom_f2q));
-//	save_item(NAME(m_rom_f3));
-//	save_item(NAME(m_rom_closure));
-//	save_item(NAME(m_rom_pause));
-//	save_item(NAME(m_cur_fa));
-//	save_item(NAME(m_cur_fc));
-//	save_item(NAME(m_cur_va));
-//	save_item(NAME(m_cur_f1));
-//	save_item(NAME(m_cur_f2));
-//	save_item(NAME(m_cur_f2q));
-//	save_item(NAME(m_cur_f3));
-//	save_item(NAME(m_filt_fa));
-//	save_item(NAME(m_filt_fc));
-//	save_item(NAME(m_filt_va));
-//	save_item(NAME(m_filt_f1));
-//	save_item(NAME(m_filt_f2));
-//	save_item(NAME(m_filt_f2q));
-//	save_item(NAME(m_filt_f3));
-//	save_item(NAME(m_phonetick));
-//	save_item(NAME(m_ticks));
-//	save_item(NAME(m_pitch));
-//	save_item(NAME(m_closure));
-//	save_item(NAME(m_update_counter));
-//	save_item(NAME(m_cur_closure));
-//	save_item(NAME(m_noise));
-//	save_item(NAME(m_cur_noise));
-//	save_item(NAME(m_voice_1));
-//	save_item(NAME(m_voice_2));
-//	save_item(NAME(m_voice_3));
-//	save_item(NAME(m_noise_1));
-//	save_item(NAME(m_noise_2));
-//	save_item(NAME(m_noise_3));
-//	save_item(NAME(m_noise_4));
-//	save_item(NAME(m_vn_1));
-//	save_item(NAME(m_vn_2));
-//	save_item(NAME(m_vn_3));
-//	save_item(NAME(m_vn_4));
-//	save_item(NAME(m_vn_5));
-//	save_item(NAME(m_vn_6));
-//	save_item(NAME(m_f1_a));
-//	save_item(NAME(m_f1_b));
-//	save_item(NAME(m_f2v_a));
-//	save_item(NAME(m_f2v_b));
-//	save_item(NAME(m_f2n_a));
-//	save_item(NAME(m_f2n_b));
-//	save_item(NAME(m_f3_a));
-//	save_item(NAME(m_f3_b));
-//	save_item(NAME(m_f4_a));
-//	save_item(NAME(m_f4_b));
-//	save_item(NAME(m_fx_a));
-//	save_item(NAME(m_fx_b));
-//	save_item(NAME(m_fn_a));
-//	save_item(NAME(m_fn_b));
-//}
-//
+	// reset outputs
+	m_ar_state = ASSERT_LINE;
+}
+
 //
 ////-------------------------------------------------
 ////  device_reset - handle device reset
 ////-------------------------------------------------
 //
-//void votrax_sc01_device::device_reset()
-//{
-//	// Technically, there's no reset in this chip, and initial state
-//	// is random.  Still, it's a good idea to start it with something
-//	// sane.
-//
-//	m_phone = 0x3f;
-//	m_inflection = 0;
-//	m_ar_state = ASSERT_LINE;
+void votrax_sc01_device::device_reset() {
+    // Technically, there's no reset in this chip, and initial state
+    // is random.  Still, it's a good idea to start it with something
+    // sane.
+
+    m_phone = 0x3f;
+    m_inflection = 0;
+    m_ar_state = ASSERT_LINE;
 //	m_ar_cb(m_ar_state);
 //
 //	m_sample_count = 0;
@@ -327,7 +223,7 @@ tp1 = phi clock (tied to f2q rom access)
 //	memset(m_vn_4, 0, sizeof(m_vn_4));
 //	memset(m_vn_5, 0, sizeof(m_vn_5));
 //	memset(m_vn_6, 0, sizeof(m_vn_6));
-//}
+}
 //
 //
 ////-------------------------------------------------
